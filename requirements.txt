@@ -1,8 +1,9 @@
-streamlit==1.28.1
-pandas==2.1.3
-networkx==3.2.1
-matplotlib==3.8.2
-openpyxl==3.1.2
-networkx==3.2.1
+streamlit
+pandas
+networkx
+matplotlib
+openpyxl
+networkx
 setuptools
 wheel
+
