@@ -51,15 +51,17 @@ if query:
         nx.draw(
             subgraph, pos,
             with_labels=True,
-            node_color=[
-                "lightblue" if G.nodes[n]["type"] == "Band" else "lightgreen"
-                for n in subgraph.nodes
-            ],
+           node_color = [
+    "lightblue" if G.nodes[n].get("type", "Unknown") == "Band" else "lightgreen"
+    for n in subgraph.nodes
+],
+
             node_size=1500,
             font_size=10
         )
         st.pyplot(plt)
     else:
         st.warning("Name not found in dataset.")
+
 
 
