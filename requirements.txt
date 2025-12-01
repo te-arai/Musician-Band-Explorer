@@ -4,3 +4,5 @@ networkx==3.2.1
 matplotlib==3.8.2
 openpyxl==3.1.2
 networkx==3.2.1
+setuptools
+wheel
