@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 
 # --- Load your dataset ---
 # Replace with the path to your Excel file
-elements = pd.read_excel("Artists Bands.xlsx", sheet_name="Elements")
-connections = pd.read_excel("Artists Bands.xlsx", sheet_name="Connections")
+elements = pd.read_excel("ArtistsBands.xlsx", sheet_name="Elements")
+connections = pd.read_excel("ArtistsBands.xlsx", sheet_name="Connections")
 
 # --- Build the graph ---
 G = nx.Graph()
@@ -61,4 +61,5 @@ if query:
         st.pyplot(plt)
     else:
         st.warning("Name not found in dataset.")
+
 
