@@ -30,7 +30,7 @@ if query:
     query = query.strip()  # remove extra spaces
 
     # Build a lookup dictionary for case-insensitive search
-    lookup = {name.lower(): name for name in G.nodes}
+    lookup = {str(name).lower(): str(name) for name in G.nodes}
 
     if query.lower() in lookup:
         actual_name = lookup[query.lower()]  # get the correctly cased name
@@ -62,6 +62,7 @@ if query:
         st.pyplot(plt)
     else:
         st.warning("Name not found in dataset.")
+
 
 
 
