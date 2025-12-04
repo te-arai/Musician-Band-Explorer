@@ -4,7 +4,6 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 # --- Load your dataset ---
-# Replace with the path to your Excel file
 elements = pd.read_excel("ArtistsBands.xlsx", sheet_name="Elements")
 connections = pd.read_excel("ArtistsBands.xlsx", sheet_name="Connections")
 
@@ -51,18 +50,14 @@ if query:
         nx.draw(
             subgraph, pos,
             with_labels=True,
-           node_color = [
-    "lightblue" if G.nodes[n].get("type", "Unknown") == "Band" else "lightgreen"
-    for n in subgraph.nodes
-],
-
+            node_color=[
+                "red" if n == actual_name else
+                "lightblue" if G.nodes[n].get("type", "Unknown") == "Band" else "lightgreen"
+                for n in subgraph.nodes
+            ],
             node_size=1500,
             font_size=10
         )
         st.pyplot(plt)
     else:
         st.warning("Name not found in dataset.")
-
-
-
-
