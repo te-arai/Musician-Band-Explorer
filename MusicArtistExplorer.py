@@ -23,7 +23,10 @@ for _, row in connections.iterrows():
 # --- Streamlit UI ---
 st.title("🎶 Musician ↔ Band Explorer")
 
-query = st.text_input("Enter a musician or band name:")
+# Sidebar controls
+st.sidebar.header("Search Options")
+query = st.sidebar.text_input("Enter a musician or band name:")
+radius = st.sidebar.slider("Connection depth (hops)", 1, 3, 2)
 
 if query:
     query = query.strip()  # remove extra spaces
@@ -34,7 +37,6 @@ if query:
     if query.lower() in lookup:
         actual_name = lookup[query.lower()]  # get the correctly cased name
 
-        radius = st.slider("Connection depth (hops)", 1, 3, 2)
         nodes_within_radius = [
             n for n, dist in nx.single_source_shortest_path_length(G, actual_name).items()
             if dist <= radius
