@@ -23,11 +23,11 @@ for _, row in connections.iterrows():
     G.add_edge(from_node, to_node)
 
     # If this connection marks the musician as an original member
-    if row.get("Original Member", "NO") == "YES":
-        # Tag the musician node
+    if str(row.get("Original Member", "NO")).strip().upper() == "YES":
+        # Tag whichever side is a musician
         if G.nodes[from_node].get("type") == "Musician":
             G.nodes[from_node]["original_member"] = "YES"
-        elif G.nodes[to_node].get("type") == "Musician":
+        if G.nodes[to_node].get("type") == "Musician":
             G.nodes[to_node]["original_member"] = "YES"
 
 # --- Streamlit UI ---
@@ -41,6 +41,7 @@ radius = st.sidebar.slider("Connection depth (hops)", 1, 3, 2)
 if query:
     query = query.strip()
 
+    # Case-insensitive lookup
     lookup = {str(name).lower(): str(name) for name in G.nodes}
 
     if query.lower() in lookup:
@@ -72,18 +73,15 @@ if query:
             font_size=10
         )
 
-        plt.figure(figsize=(8, 8))
-nx.draw(
-    subgraph, pos,
-    with_labels=True,
-    node_color=[ ... ],
-    node_size=1500,
-    font_size=10
-)
-
+        # Legend for colors
+        st.markdown("""
+        **Legend:**
+        - 🔴 Red = Selected node
+        - 🔵 Blue = Band
+        - 🟡 Gold = Original Member (Musician)
+        - 🟢 Green = Other Musician
+        """)
 
         st.pyplot(plt)
     else:
         st.warning("Name not found in dataset.")
-
-
