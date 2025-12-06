@@ -1,4 +1,4 @@
-import streamlit as st
+fimport streamlit as st
 import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -71,6 +71,18 @@ if query:
             node_size=1500,
             font_size=10
         )
+
+        plt.figure(figsize=(8, 8))
+nx.draw(
+    subgraph, pos,
+    with_labels=True,
+    node_color=[ ... ],
+    node_size=1500,
+    font_size=10
+)
+
+
         st.pyplot(plt)
     else:
         st.warning("Name not found in dataset.")
+
