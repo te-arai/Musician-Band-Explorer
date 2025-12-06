@@ -14,11 +14,21 @@ G = nx.Graph()
 for _, row in elements.iterrows():
     label = row["Label"]
     node_type = row.get("Type", "Unknown")
-    G.add_node(label, type=node_type)
+    G.add_node(label, type=node_type, original_member="NO")  # default
 
 # Add edges (connections between musicians and bands)
 for _, row in connections.iterrows():
-    G.add_edge(row["From"], row["To"])
+    from_node = row["From"]
+    to_node = row["To"]
+    G.add_edge(from_node, to_node)
+
+    # If this connection marks the musician as an original member
+    if row.get("Original Member", "NO") == "YES":
+        # Tag the musician node
+        if G.nodes[from_node].get("type") == "Musician":
+            G.nodes[from_node]["original_member"] = "YES"
+        elif G.nodes[to_node].get("type") == "Musician":
+            G.nodes[to_node]["original_member"] = "YES"
 
 # --- Streamlit UI ---
 st.title("🎶 Musician ↔ Band Explorer")
@@ -29,13 +39,12 @@ query = st.sidebar.text_input("Enter a musician or band name:")
 radius = st.sidebar.slider("Connection depth (hops)", 1, 3, 2)
 
 if query:
-    query = query.strip()  # remove extra spaces
+    query = query.strip()
 
-    # Build a lookup dictionary for case-insensitive search
     lookup = {str(name).lower(): str(name) for name in G.nodes}
 
     if query.lower() in lookup:
-        actual_name = lookup[query.lower()]  # get the correctly cased name
+        actual_name = lookup[query.lower()]
 
         nodes_within_radius = [
             n for n, dist in nx.single_source_shortest_path_length(G, actual_name).items()
@@ -54,7 +63,9 @@ if query:
             with_labels=True,
             node_color=[
                 "red" if n == actual_name else
-                "lightblue" if G.nodes[n].get("type", "Unknown") == "Band" else "lightgreen"
+                "lightblue" if G.nodes[n].get("type") == "Band" else
+                "gold" if G.nodes[n].get("original_member") == "YES" else
+                "lightgreen"
                 for n in subgraph.nodes
             ],
             node_size=1500,
