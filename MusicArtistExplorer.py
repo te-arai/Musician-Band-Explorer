@@ -1,4 +1,4 @@
-fimport streamlit as st
+import streamlit as st
 import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -85,4 +85,5 @@ nx.draw(
         st.pyplot(plt)
     else:
         st.warning("Name not found in dataset.")
+
 
