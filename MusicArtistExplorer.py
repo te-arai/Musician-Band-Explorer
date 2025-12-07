@@ -8,28 +8,42 @@ import matplotlib.patches as mpatches
 elements = pd.read_excel("ArtistsBands.xlsx", sheet_name="Elements")
 connections = pd.read_excel("ArtistsBands.xlsx", sheet_name="Connections")
 
-# --- Build the graph ---
-G = nx.Graph()
+# --- Build the directed graph ---
+G = nx.DiGraph()
 
 # Add nodes (musicians and bands)
 for _, row in elements.iterrows():
-    label = row["Label"]
+    label = str(row["Label"]).strip()
     node_type = row.get("Type", "Unknown")
-    G.add_node(label, type=node_type, original_member="NO")  # default
+    if label not in G.nodes:  # avoid duplicates
+        G.add_node(label, type=node_type, original_member="NO")
 
-# Add edges (connections between musicians and bands)
+# Add edges (Band → Musician, with Original Member flag)
 for _, row in connections.iterrows():
-    from_node = row["From"]
-    to_node = row["To"]
-    G.add_edge(from_node, to_node)
+    from_node = str(row["From"]).strip()
+    to_node = str(row["To"]).strip()
 
-    # If this connection marks the musician as an original member
-    if str(row.get("Original Member", "NO")).strip().upper() == "YES":
-        # Tag whichever side is a musician
-        if G.nodes[from_node].get("type") == "Musician":
-            G.nodes[from_node]["original_member"] = "YES"
-        if G.nodes[to_node].get("type") == "Musician":
+    # Ensure nodes exist even if missing from Elements
+    if from_node not in G.nodes:
+        G.add_node(from_node, type="Unknown", original_member="NO")
+    if to_node not in G.nodes:
+        G.add_node(to_node, type="Unknown", original_member="NO")
+
+    # Normalize YES/NO
+    is_original = str(row.get("Original Member", "NO")).strip().upper() == "YES"
+
+    # Always direct edge from Band → Musician if possible
+    if G.nodes[from_node].get("type") == "Band" and G.nodes[to_node].get("type") == "Musician":
+        G.add_edge(from_node, to_node, original_member=is_original)
+        if is_original:
             G.nodes[to_node]["original_member"] = "YES"
+    elif G.nodes[to_node].get("type") == "Band" and G.nodes[from_node].get("type") == "Musician":
+        G.add_edge(to_node, from_node, original_member=is_original)
+        if is_original:
+            G.nodes[from_node]["original_member"] = "YES"
+    else:
+        # fallback if types are missing
+        G.add_edge(from_node, to_node, original_member=is_original)
 
 # --- Streamlit UI ---
 st.title("🎶 Musician ↔ Band Explorer")
@@ -57,8 +71,6 @@ if query:
         ]
 
         st.write(f"Connections within {radius} hops of {actual_name}:")
-        # Commented out list of names for cleaner UI
-        # st.write(nodes_within_radius)
 
         # --- Apply filter ---
         if filter_originals:
@@ -73,28 +85,51 @@ if query:
         pos = nx.spring_layout(subgraph)
 
         plt.figure(figsize=(8, 8))
-        nx.draw(
+
+        # Draw nodes
+        nx.draw_networkx_nodes(
             subgraph, pos,
-            with_labels=True,
             node_color=[
                 "lightblue" if G.nodes[n].get("type") == "Band" else
                 "gold" if G.nodes[n].get("original_member") == "YES" else
                 "lightgreen"
                 for n in subgraph.nodes
             ],
-            node_size=1500,
-            font_size=10
+            node_size=1500
+        )
+
+        # Draw labels
+        nx.draw_networkx_labels(subgraph, pos, font_size=10)
+
+        # Draw edges with arrows
+        edge_colors = []
+        edge_widths = []
+        for u, v, data in subgraph.edges(data=True):
+            if data.get("original_member"):
+                edge_colors.append("gold")
+                edge_widths.append(3.0)  # bold
+            else:
+                edge_colors.append("gray")
+                edge_widths.append(1.5)
+
+        nx.draw_networkx_edges(
+            subgraph, pos,
+            arrowstyle="->",
+            arrowsize=20,
+            edge_color=edge_colors,
+            width=edge_widths
         )
 
         # --- Embedded legend inside the plot ---
         legend_handles = [
             mpatches.Patch(color="lightblue", label="Band"),
             mpatches.Patch(color="gold", label="Original Member (Musician)"),
-            mpatches.Patch(color="lightgreen", label="Other Musician")
+            mpatches.Patch(color="lightgreen", label="Other Musician"),
+            mpatches.Patch(color="gray", label="Connection"),
+            mpatches.Patch(color="gold", label="Original Member Connection (arrow)")
         ]
         plt.legend(handles=legend_handles, loc="best")
 
         st.pyplot(plt)
     else:
         st.warning("Name not found in dataset.")
-
