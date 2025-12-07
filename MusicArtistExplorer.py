@@ -38,6 +38,15 @@ st.sidebar.header("Search Options")
 query = st.sidebar.text_input("Enter a musician or band name:")
 radius = st.sidebar.slider("Connection depth (hops)", 1, 3, 2)
 
+# Legend moved to sidebar
+st.sidebar.markdown("""
+**Legend:**
+- 🔴 Red = Selected node
+- 🔵 Blue = Band
+- 🟡 Gold = Original Member (Musician)
+- 🟢 Green = Other Musician
+""")
+
 if query:
     query = query.strip()
 
@@ -53,7 +62,8 @@ if query:
         ]
 
         st.write(f"Connections within {radius} hops of {actual_name}:")
-        st.write(nodes_within_radius)
+        # Commented out list of names for cleaner UI
+        # st.write(nodes_within_radius)
 
         subgraph = G.subgraph(nodes_within_radius)
         pos = nx.spring_layout(subgraph)
@@ -72,15 +82,6 @@ if query:
             node_size=1500,
             font_size=10
         )
-
-        # Legend for colors
-        st.markdown("""
-        **Legend:**
-        - 🔴 Red = Selected node
-        - 🔵 Blue = Band
-        - 🟡 Gold = Original Member (Musician)
-        - 🟢 Green = Other Musician
-        """)
 
         st.pyplot(plt)
     else:
