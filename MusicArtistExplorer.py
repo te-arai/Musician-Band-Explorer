@@ -88,5 +88,25 @@ if query:
 
         # --- PyVis interactive graph ---
         net = Network(height="700px", width="100%", bgcolor="#222222", font_color="white")
-        net.force_atlas_2based()
+        net.force_atlas_2based()  # physics layout
 
+        # Add nodes with colors
+        for node, data in subgraph.nodes(data=True):
+            color = "lightblue" if data.get("type") == "Band" else \
+                    "gold" if data.get("original_member") == "YES" else "lightgreen"
+            net.add_node(node, label=node, color=color)
+
+        # Add edges with colors/widths
+        for u, v, data in subgraph.edges(data=True):
+            color = "gold" if data.get("original_member") else "gray"
+            width = 3 if data.get("original_member") else 1.5
+            net.add_edge(u, v, color=color, width=width)
+
+        # Generate HTML in memory (no notebook mode)
+        html = net.generate_html(notebook=False)
+
+        # Embed in Streamlit
+        components.html(html, height=750, scrolling=True)
+
+    else:
+        st.warning("Name not found in dataset.")
