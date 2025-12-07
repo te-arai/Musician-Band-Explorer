@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 
 # --- Load your dataset ---
 elements = pd.read_excel("ArtistsBands.xlsx", sheet_name="Elements")
@@ -29,7 +28,6 @@ for _, row in connections.iterrows():
     if to_node not in G.nodes:
         G.add_node(to_node, type="Unknown", original_member="NO")
 
-    # Normalize YES/NO
     is_original = str(row.get("Original Member", "NO")).strip().upper() == "YES"
 
     # Always direct edge from Band → Musician if possible
@@ -42,7 +40,6 @@ for _, row in connections.iterrows():
         if is_original:
             G.nodes[from_node]["original_member"] = "YES"
     else:
-        # fallback if types are missing
         G.add_edge(from_node, to_node, original_member=is_original)
 
 # --- Streamlit UI ---
@@ -55,6 +52,14 @@ radius = st.sidebar.slider("Connection depth (hops)", 1, 3, 2)
 
 # Filter: Show only Original Members (default = show all nodes)
 filter_originals = st.sidebar.checkbox("Only Original Members", value=False)
+
+# Sidebar legend
+st.sidebar.markdown("### Legend")
+st.sidebar.markdown("- 🟦 **Band**")
+st.sidebar.markdown("- 🟨 **Original Member (Musician)**")
+st.sidebar.markdown("- 🟩 **Other Musician**")
+st.sidebar.markdown("- ➡️ **Gray arrow**: Connection")
+st.sidebar.markdown("- ➡️ **Gold arrow**: Original Member Connection")
 
 if query:
     query = query.strip()
@@ -120,15 +125,8 @@ if query:
             width=edge_widths
         )
 
-        # --- Embedded legend inside the plot ---
-        legend_handles = [
-            mpatches.Patch(color="lightblue", label="Band"),
-            mpatches.Patch(color="gold", label="Original Member (Musician)"),
-            mpatches.Patch(color="lightgreen", label="Other Musician"),
-            mpatches.Patch(color="gray", label="Connection"),
-            mpatches.Patch(color="gold", label="Original Member Connection (arrow)")
-        ]
-        plt.legend(handles=legend_handles, loc="best")
+        # Remove outer box/axes
+        plt.axis("off")
 
         st.pyplot(plt)
     else:
