@@ -53,10 +53,12 @@ filter_originals = st.sidebar.checkbox("Only Original Members", value=False)
 # Sidebar legend
 st.sidebar.markdown("### Legend")
 st.sidebar.markdown("- 🟦 **Band**")
-st.sidebar.markdown("- 🟨 **Original Member (Musician)**")
+st.sidebar.markdown("- 🟨 **Original Member**")
 st.sidebar.markdown("- 🟩 **Other Musician**")
 st.sidebar.markdown("- ➖ **Gray line**: Connection")
-st.sidebar.markdown("- ➖ **Gold line**: Original Member Connection")
+st.sidebar.markdown(
+    "<span style='color:gold'>— Original Member Connection</span>",
+    unsafe_allow_html=True)
 
 if query:
     query = query.strip()
@@ -126,3 +128,4 @@ if query:
         st.pyplot(plt)
     else:
         st.warning("Name not found in dataset.")
+
