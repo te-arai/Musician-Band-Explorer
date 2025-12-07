@@ -57,7 +57,7 @@ st.sidebar.markdown("- 🟨 **Original Member**")
 st.sidebar.markdown("- 🟩 **Other Musician**")
 st.sidebar.markdown("- ➖ **Gray line**: Connection")
 st.sidebar.markdown("-" "<span style='color:gold'> - ➖</span>" "<span style='çolor:black'> **Gold line**: Original Member Connection</span>")
->
+
 if query:
     query = query.strip()
 
@@ -126,6 +126,7 @@ if query:
         st.pyplot(plt)
     else:
         st.warning("Name not found in dataset.")
+
 
 
 
