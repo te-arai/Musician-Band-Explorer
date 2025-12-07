@@ -53,4 +53,86 @@ filter_originals = st.sidebar.checkbox("Only Original Members", value=False)
 
 # Sidebar legend
 st.sidebar.markdown("### Legend")
-st.sidebar.markdown("- 🟦 **Band
+st.sidebar.markdown("- 🟦 **Band**")
+st.sidebar.markdown("- 🟨 **Original Member**")
+st.sidebar.markdown("- 🟩 **Other Musician**")
+st.sidebar.markdown("- **Gray line**: Connection")
+st.sidebar.markdown("- **Gold line**: Original Member Connection")
+
+if query:
+    query = query.strip()
+
+    # Case-insensitive lookup
+    lookup = {str(name).lower(): str(name) for name in G.nodes}
+
+    if query.lower() in lookup:
+        actual_name = lookup[query.lower()]
+
+        nodes_within_radius = [
+            n for n, dist in nx.single_source_shortest_path_length(G, actual_name).items()
+            if dist <= radius
+        ]
+
+        st.write(f"Connections within {radius} hops of {actual_name}:")
+
+        # --- Apply filter ---
+        if filter_originals:
+            filtered_nodes = [
+                n for n in nodes_within_radius
+                if G.nodes[n].get("original_member") == "YES" or G.nodes[n].get("type") == "Band"
+            ]
+        else:
+            filtered_nodes = nodes_within_radius
+
+        subgraph = G.subgraph(filtered_nodes)
+
+        # --- PyVis interactive graph ---
+        net = Network(height="700px", width="100%", bgcolor="white", font_color="black")
+        net.force_atlas_2based()  # physics layout
+
+        # Add nodes with colors
+        for node, data in subgraph.nodes(data=True):
+            color = (
+                "lightblue" if data.get("type") == "Band" else
+                "gold" if data.get("original_member") == "YES" else
+                "lightgreen"
+            )
+            net.add_node(node, label=node, color=color)
+
+        # Add edges with colors/widths
+        for u, v, data in subgraph.edges(data=True):
+            color = "gold" if data.get("original_member") else "gray"
+            width = 3 if data.get("original_member") else 1.5
+            net.add_edge(u, v, color=color, width=width)
+
+        # Optional: style labels and default edge color via vis.js options
+        net.set_options("""
+        var options = {
+          nodes: { font: { color: "black", size: 16 } },
+          edges: { color: { color: "gray" } },
+          physics: { stabilization: true }
+        }
+        """)
+
+        # Generate HTML
+        html = net.generate_html(notebook=False)
+
+        # Force the network container background to white (PyVis uses a div with id="mynetwork")
+        # This ensures the canvas isn't transparent over Streamlit's dark theme
+        if 'id="mynetwork"' in html:
+            html = html.replace(
+                'id="mynetwork"',
+                'id="mynetwork" style="background-color:white;"'
+            )
+
+        # Wrap in a white container to avoid any inherited dark backgrounds
+        wrapped_html = f"""
+        <div style="background-color:white; padding:0; margin:0;">
+            {html}
+        </div>
+        """
+
+        components.html(wrapped_html, height=750, scrolling=True)
+
+    else:
+        st.warning("Name not found in dataset.")
