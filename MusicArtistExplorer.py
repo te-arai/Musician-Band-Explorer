@@ -39,10 +39,8 @@ st.sidebar.header("Search Options")
 query = st.sidebar.text_input("Enter a musician or band name:")
 radius = st.sidebar.slider("Connection depth (hops)", 1, 3, 2)
 
-# Filter checkboxes
-show_bands = st.sidebar.checkbox("Show Bands", value=True)
+# Filter: Show Original Members only
 show_originals = st.sidebar.checkbox("Show Original Members", value=True)
-show_others = st.sidebar.checkbox("Show Other Musicians", value=True)
 
 if query:
     query = query.strip()
@@ -62,29 +60,16 @@ if query:
         # Commented out list of names for cleaner UI
         # st.write(nodes_within_radius)
 
-        # --- Apply filters ---
-        filtered_nodes = []
-        for n in nodes_within_radius:
-            node_type = G.nodes[n].get("type")
-            is_original = G.nodes[n].get("original_member") == "YES"
-
-            if node_type == "Band" and show_bands:
-                filtered_nodes.append(n)
-            elif node_type == "Musician" and is_original and show_originals:
-                filtered_nodes.append(n)
-            elif node_type == "Musician" and not is_original and show_others:
-                filtered_nodes.append(n)
+        # --- Apply filter ---
+        if show_originals:
+            filtered_nodes = [
+                n for n in nodes_within_radius
+                if G.nodes[n].get("original_member") == "YES" or G.nodes[n].get("type") == "Band"
+            ]
+        else:
+            filtered_nodes = nodes_within_radius
 
         subgraph = G.subgraph(filtered_nodes)
-
-        # --- Interactive highlighting ---
-        selected_node = st.sidebar.selectbox("Select a node to highlight:", subgraph.nodes)
-
-        # Show details of selected node
-        st.sidebar.write(f"**Name:** {selected_node}")
-        st.sidebar.write(f"**Type:** {G.nodes[selected_node].get('type')}")
-        st.sidebar.write(f"**Original Member:** {G.nodes[selected_node].get('original_member')}")
-
         pos = nx.spring_layout(subgraph)
 
         plt.figure(figsize=(8, 8))
@@ -92,22 +77,17 @@ if query:
             subgraph, pos,
             with_labels=True,
             node_color=[
-                "red" if n == selected_node else
                 "lightblue" if G.nodes[n].get("type") == "Band" else
                 "gold" if G.nodes[n].get("original_member") == "YES" else
                 "lightgreen"
                 for n in subgraph.nodes
             ],
-            node_size=[
-                2000 if n == selected_node else 1500
-                for n in subgraph.nodes
-            ],
+            node_size=1500,
             font_size=10
         )
 
         # --- Embedded legend inside the plot ---
         legend_handles = [
-            mpatches.Patch(color="red", label="Highlighted node"),
             mpatches.Patch(color="lightblue", label="Band"),
             mpatches.Patch(color="gold", label="Original Member (Musician)"),
             mpatches.Patch(color="lightgreen", label="Other Musician")
