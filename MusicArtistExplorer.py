@@ -56,9 +56,7 @@ st.sidebar.markdown("- 🟦 **Band**")
 st.sidebar.markdown("- 🟨 **Original Member**")
 st.sidebar.markdown("- 🟩 **Other Musician**")
 st.sidebar.markdown("- ➖ **Gray line**: Connection")
-st.sidebar.markdown(
-    "<span style='color:gold'>— Original Member Connection</span>",
-    unsafe_allow_html=True)
+st.sidebar.markdown("-" "<span style='color:gold'> ➖" "<span style='çolor:black'> **Gold line**: Original Member Connection")
 
 if query:
     query = query.strip()
