@@ -115,24 +115,4 @@ if query:
         """)
 
         # Generate HTML
-        html = net.generate_html(notebook=False)
-
-        # Force the network container background to white (PyVis uses a div with id="mynetwork")
-        # This ensures the canvas isn't transparent over Streamlit's dark theme
-        if 'id="mynetwork"' in html:
-            html = html.replace(
-                'id="mynetwork"',
-                'id="mynetwork" style="background-color:white;"'
-            )
-
-        # Wrap in a white container to avoid any inherited dark backgrounds
-        wrapped_html = f"""
-        <div style="background-color:white; padding:0; margin:0;">
-            {html}
-        </div>
-        """
-
-        components.html(wrapped_html, height=750, scrolling=True)
-
-    else:
-        st.warning("Name not found in dataset.")
+        html = net.generate_html
