@@ -51,6 +51,9 @@ radius = st.sidebar.slider("Connection depth (hops)", 1, 3, 2)
 # Filter: Show only Original Members (default = show all nodes)
 filter_originals = st.sidebar.checkbox("Only Original Members", value=False)
 
+# Theme toggle
+theme_choice = st.sidebar.selectbox("Background Theme", ["White", "Black"])
+
 # Sidebar legend
 st.sidebar.markdown("### Legend")
 st.sidebar.markdown("- 🟦 **Band**")
@@ -87,7 +90,8 @@ if query:
         subgraph = G.subgraph(filtered_nodes)
 
         # --- PyVis interactive graph ---
-        net = Network(height="700px", width="100%", bgcolor="white", font_color="black")
+        font_color = "black" if theme_choice == "White" else "white"
+        net = Network(height="700px", width="100%", bgcolor=theme_choice.lower(), font_color=font_color)
         net.force_atlas_2based()  # physics layout
 
         # Add nodes with colors
@@ -108,16 +112,17 @@ if query:
         # Generate HTML
         html = net.generate_html(notebook=False)
 
-        # --- Body replacement + CSS reset ---
-        # Force <body> background to white
-        html = html.replace("<body>", '<body style="background:white !important;">')
+        # --- Body replacement + CSS reset based on theme ---
+        body_color = "white" if theme_choice == "White" else "black"
+        text_color = "black" if theme_choice == "White" else "white"
 
-        # Inject CSS to reset all backgrounds
-        css_reset = """
+        html = html.replace("<body>", f'<body style="background:{body_color} !important; color:{text_color};">')
+
+        css_reset = f"""
         <style>
-          html, body { background: white !important; }
-          #mynetwork { background: white !important; }
-          #mynetwork canvas { background: white !important; }
+          html, body {{ background: {body_color} !important; color: {text_color} !important; }}
+          #mynetwork {{ background: {body_color} !important; }}
+          #mynetwork canvas {{ background: {body_color} !important; }}
         </style>
         """
 
