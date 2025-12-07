@@ -100,34 +100,9 @@ if query:
                 "lightgreen"
                 for n in subgraph.nodes
             ],
-            node_size=1500
+            node_size=1500,
+            zorder=2
         )
 
         # Draw labels
-        nx.draw_networkx_labels(subgraph, pos, font_size=10)
-
-        # Draw edges with arrows
-        edge_colors = []
-        edge_widths = []
-        for u, v, data in subgraph.edges(data=True):
-            if data.get("original_member"):
-                edge_colors.append("gold")
-                edge_widths.append(3.0)  # bold
-            else:
-                edge_colors.append("gray")
-                edge_widths.append(1.5)
-
-        nx.draw_networkx_edges(
-            subgraph, pos,
-            arrowstyle="->",
-            arrowsize=20,
-            edge_color=edge_colors,
-            width=edge_widths
-        )
-
-        # Remove outer box/axes
-        plt.axis("off")
-
-        st.pyplot(plt)
-    else:
-        st.warning("Name not found in dataset.")
+        nx.draw_networkx_labels
