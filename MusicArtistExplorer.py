@@ -39,6 +39,9 @@ st.sidebar.header("Search Options")
 query = st.sidebar.text_input("Enter a musician or band name:")
 radius = st.sidebar.slider("Connection depth (hops)", 1, 3, 2)
 
+# Filter: Show only Original Members (default = show all nodes)
+filter_originals = st.sidebar.checkbox("Show only Original Members + Bands", value=False)
+
 if query:
     query = query.strip()
 
@@ -57,7 +60,16 @@ if query:
         # Commented out list of names for cleaner UI
         # st.write(nodes_within_radius)
 
-        subgraph = G.subgraph(nodes_within_radius)
+        # --- Apply filter ---
+        if filter_originals:
+            filtered_nodes = [
+                n for n in nodes_within_radius
+                if G.nodes[n].get("original_member") == "YES" or G.nodes[n].get("type") == "Band"
+            ]
+        else:
+            filtered_nodes = nodes_within_radius
+
+        subgraph = G.subgraph(filtered_nodes)
         pos = nx.spring_layout(subgraph)
 
         plt.figure(figsize=(8, 8))
@@ -65,7 +77,6 @@ if query:
             subgraph, pos,
             with_labels=True,
             node_color=[
-                "red" if n == actual_name else
                 "lightblue" if G.nodes[n].get("type") == "Band" else
                 "gold" if G.nodes[n].get("original_member") == "YES" else
                 "lightgreen"
@@ -77,7 +88,6 @@ if query:
 
         # --- Embedded legend inside the plot ---
         legend_handles = [
-            mpatches.Patch(color="red", label="Selected node"),
             mpatches.Patch(color="lightblue", label="Band"),
             mpatches.Patch(color="gold", label="Original Member (Musician)"),
             mpatches.Patch(color="lightgreen", label="Other Musician")
