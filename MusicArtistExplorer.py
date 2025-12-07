@@ -87,7 +87,7 @@ if query:
         subgraph = G.subgraph(filtered_nodes)
 
         # --- PyVis interactive graph ---
-        net = Network(height="700px", width="100%", bgcolor="#222222", font_color="white")
+        net = Network(height="700px", width="100%", bgcolor="white", font_color="black")
         net.force_atlas_2based()  # physics layout
 
         # Add nodes with colors
@@ -110,3 +110,4 @@ if query:
 
     else:
         st.warning("Name not found in dataset.")
+
