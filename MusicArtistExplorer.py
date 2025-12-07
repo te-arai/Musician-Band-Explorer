@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 
 # --- Load your dataset ---
 elements = pd.read_excel("ArtistsBands.xlsx", sheet_name="Elements")
@@ -38,15 +39,6 @@ st.sidebar.header("Search Options")
 query = st.sidebar.text_input("Enter a musician or band name:")
 radius = st.sidebar.slider("Connection depth (hops)", 1, 3, 2)
 
-# Legend moved to sidebar
-st.sidebar.markdown("""
-**Legend:**
-- 🔴 Red = Selected node
-- 🔵 Blue = Band
-- 🟡 Gold = Original Member (Musician)
-- 🟢 Green = Other Musician
-""")
-
 if query:
     query = query.strip()
 
@@ -82,6 +74,15 @@ if query:
             node_size=1500,
             font_size=10
         )
+
+        # --- Embedded legend inside the plot ---
+        legend_handles = [
+            mpatches.Patch(color="red", label="Selected node"),
+            mpatches.Patch(color="lightblue", label="Band"),
+            mpatches.Patch(color="gold", label="Original Member (Musician)"),
+            mpatches.Patch(color="lightgreen", label="Other Musician")
+        ]
+        plt.legend(handles=legend_handles, loc="best")
 
         st.pyplot(plt)
     else:
