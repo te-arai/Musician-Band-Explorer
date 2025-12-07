@@ -39,6 +39,12 @@ st.sidebar.header("Search Options")
 query = st.sidebar.text_input("Enter a musician or band name:")
 radius = st.sidebar.slider("Connection depth (hops)", 1, 3, 2)
 
+# Layout selector
+layout_option = st.sidebar.selectbox(
+    "Choose layout:",
+    ("Spring", "Circular", "Shell")
+)
+
 if query:
     query = query.strip()
 
@@ -58,7 +64,14 @@ if query:
         # st.write(nodes_within_radius)
 
         subgraph = G.subgraph(nodes_within_radius)
-        pos = nx.spring_layout(subgraph)
+
+        # --- Apply chosen layout ---
+        if layout_option == "Spring":
+            pos = nx.spring_layout(subgraph)
+        elif layout_option == "Circular":
+            pos = nx.circular_layout(subgraph)
+        elif layout_option == "Shell":
+            pos = nx.shell_layout(subgraph)
 
         plt.figure(figsize=(8, 8))
         nx.draw(
