@@ -39,8 +39,8 @@ st.sidebar.header("Search Options")
 query = st.sidebar.text_input("Enter a musician or band name:")
 radius = st.sidebar.slider("Connection depth (hops)", 1, 3, 2)
 
-# Filter: Show Original Members only
-show_originals = st.sidebar.checkbox("Show Original Members", value=True)
+# Filter: Show only Original Members (default = show all nodes)
+filter_originals = st.sidebar.checkbox("Show only Original Members + Bands", value=False)
 
 if query:
     query = query.strip()
@@ -61,7 +61,7 @@ if query:
         # st.write(nodes_within_radius)
 
         # --- Apply filter ---
-        if show_originals:
+        if filter_originals:
             filtered_nodes = [
                 n for n in nodes_within_radius
                 if G.nodes[n].get("original_member") == "YES" or G.nodes[n].get("type") == "Band"
