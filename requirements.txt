@@ -6,4 +6,6 @@ openpyxl
 networkx
 setuptools
 wheel
+pyvis
+
 
