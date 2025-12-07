@@ -91,18 +91,9 @@ if query:
 
         plt.figure(figsize=(8, 8))
 
-        # Draw nodes
-        nx.draw_networkx_nodes(
-            subgraph, pos,
-            node_color=[
-                "lightblue" if G.nodes[n].get("type") == "Band" else
-                "gold" if G.nodes[n].get("original_member") == "YES" else
-                "lightgreen"
-                for n in subgraph.nodes
-            ],
-            node_size=1500,
-            zorder=2
-        )
-
-        # Draw labels
-        nx.draw_networkx_labels
+        # Draw edges first
+        edge_colors = []
+        edge_widths = []
+        for u, v, data in subgraph.edges(data=True):
+            if data.get("original_member"):
+                edge_colors.append("gold")
