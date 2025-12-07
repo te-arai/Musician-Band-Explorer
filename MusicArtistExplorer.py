@@ -40,7 +40,7 @@ query = st.sidebar.text_input("Enter a musician or band name:")
 radius = st.sidebar.slider("Connection depth (hops)", 1, 3, 2)
 
 # Filter: Show only Original Members (default = show all nodes)
-filter_originals = st.sidebar.checkbox("Show only Original Members + Bands", value=False)
+filter_originals = st.sidebar.checkbox("Only Original Members", value=False)
 
 if query:
     query = query.strip()
@@ -97,3 +97,4 @@ if query:
         st.pyplot(plt)
     else:
         st.warning("Name not found in dataset.")
+
