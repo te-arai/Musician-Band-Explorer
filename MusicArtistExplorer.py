@@ -88,4 +88,5 @@ if query:
 
         # --- PyVis interactive graph ---
         net = Network(height="700px", width="100%", bgcolor="#222222", font_color="white")
-        net.force_atlas
+        net.force_atlas_2based()
+
