@@ -89,47 +89,38 @@ if query:
 
         subgraph = G.subgraph(filtered_nodes)
 
+        # --- Theme-specific palettes ---
+        if theme_choice == "White":
+            bg_color = "white"
+            font_color = "black"
+            band_color = "#1f77b4"        # medium blue
+            original_color = "#ff7f0e"    # orange/gold
+            musician_color = "#2ca02c"    # green
+            edge_normal = "#888888"       # medium gray
+            edge_original = "#ff7f0e"     # orange
+        else:  # Black theme
+            bg_color = "black"
+            font_color = "white"
+            band_color = "#6baed6"        # light blue
+            original_color = "#ffd700"    # bright gold
+            musician_color = "#98fb98"    # pale green
+            edge_normal = "#aaaaaa"       # light gray
+            edge_original = "#ffd700"     # gold
+
         # --- PyVis interactive graph ---
-        font_color = "black" if theme_choice == "White" else "white"
-        net = Network(height="700px", width="100%", bgcolor=theme_choice.lower(), font_color=font_color)
+        net = Network(height="700px", width="100%", bgcolor=bg_color, font_color=font_color)
         net.force_atlas_2based()  # physics layout
 
-        # Add nodes with colors
+        # Add nodes with theme colors
         for node, data in subgraph.nodes(data=True):
-            color = (
-                "lightblue" if data.get("type") == "Band" else
-                "gold" if data.get("original_member") == "YES" else
-                "lightgreen"
-            )
+            if data.get("type") == "Band":
+                color = band_color
+            elif data.get("original_member") == "YES":
+                color = original_color
+            else:
+                color = musician_color
             net.add_node(node, label=node, color=color)
 
-        # Add edges with colors/widths
+        # Add edges with theme colors
         for u, v, data in subgraph.edges(data=True):
-            color = "gold" if data.get("original_member") else "gray"
-            width = 3 if data.get("original_member") else 1.5
-            net.add_edge(u, v, color=color, width=width)
-
-        # Generate HTML
-        html = net.generate_html(notebook=False)
-
-        # --- Body replacement + CSS reset based on theme ---
-        body_color = "white" if theme_choice == "White" else "black"
-        text_color = "black" if theme_choice == "White" else "white"
-
-        html = html.replace("<body>", f'<body style="background:{body_color} !important; color:{text_color};">')
-
-        css_reset = f"""
-        <style>
-          html, body {{ background: {body_color} !important; color: {text_color} !important; }}
-          #mynetwork {{ background: {body_color} !important; }}
-          #mynetwork canvas {{ background: {body_color} !important; }}
-        </style>
-        """
-
-        wrapped_html = f"{css_reset}{html}"
-
-        # Embed in Streamlit
-        components.html(wrapped_html, height=750, scrolling=True)
-
-    else:
-        st.warning("Name not found in dataset.")
+            color = edge_original
