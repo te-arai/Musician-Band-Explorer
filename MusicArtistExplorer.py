@@ -149,4 +149,7 @@ if query:
         wrapped_html = f"{css_reset}{html}"
 
         # Embed in Streamlit
-        components.html(wrapped_html, height=750, scrolling
+        components.html(wrapped_html, height=750, scrolling=True)
+
+    else:
+        st.warning("Name not found in dataset.")
