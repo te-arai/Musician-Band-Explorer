@@ -61,7 +61,7 @@ if manual_query:
     st.session_state["query"] = manual_query.strip()
 
 # Capture clicked node from JS
-clicked_node = streamlit_js_eval(js_expressions="window.clickedNode", key="clicked-node")
+clicked_node = streamlit_js_eval(js_expressions="", key="clicked-node")
 
 if clicked_node and clicked_node != st.session_state["query"]:
     st.session_state["query"] = clicked_node.strip()
@@ -122,7 +122,7 @@ if query:
         # Patch: expose network as window.network
         html = html.replace("var network = new vis.Network", "window.network = new vis.Network")
 
-        # Inject JS to capture clicks
+        # Inject JS to capture clicks and notify Streamlit
         click_js = """
         <script type="text/javascript">
           window.addEventListener("load", function() {
@@ -132,6 +132,9 @@ if query:
                   const nodeId = params.nodes[0];
                   window.clickedNode = nodeId;
                   console.log("Clicked node:", nodeId);
+                  if (window.Streamlit) {
+                    Streamlit.setComponentValue(nodeId);  // notify Streamlit immediately
+                  }
                 }
               });
             }
