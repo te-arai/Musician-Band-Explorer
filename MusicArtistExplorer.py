@@ -1,9 +1,7 @@
 import streamlit as st
 import pandas as pd
 import networkx as nx
-from pyvis.network import Network
-import streamlit.components.v1 as components
-from streamlit_js_eval import streamlit_js_eval
+from visjs_network_component import visjs_network  # our new component
 
 # --- Load your dataset ---
 elements = pd.read_excel("ArtistsBands.xlsx", sheet_name="Elements")
@@ -11,7 +9,6 @@ connections = pd.read_excel("ArtistsBands.xlsx", sheet_name="Connections")
 
 # --- Build the undirected graph ---
 G = nx.Graph()
-
 for _, row in elements.iterrows():
     label = str(row["Label"]).strip()
     node_type = row.get("Type", "Unknown")
@@ -21,51 +18,31 @@ for _, row in elements.iterrows():
 for _, row in connections.iterrows():
     from_node = str(row["From"]).strip()
     to_node = str(row["To"]).strip()
-
     if from_node not in G.nodes:
         G.add_node(from_node, type="Unknown", original_member="NO")
     if to_node not in G.nodes:
         G.add_node(to_node, type="Unknown", original_member="NO")
-
     is_original = str(row.get("Original Member", "NO")).strip().upper() == "YES"
     G.add_edge(from_node, to_node, original_member=is_original)
-
     if is_original:
         if G.nodes[from_node].get("type") == "Musician":
             G.nodes[from_node]["original_member"] = "YES"
         if G.nodes[to_node].get("type") == "Musician":
             G.nodes[to_node]["original_member"] = "YES"
 
-# --- Streamlit UI ---
+# --- UI ---
 st.title("🎶 Musician ↔ Band Explorer")
 
-# Initialize session state
 if "query" not in st.session_state:
     st.session_state["query"] = ""
 
-st.sidebar.header("Search Options")
 manual_query = st.sidebar.text_input("Enter a musician or band name:", value=st.session_state["query"])
 radius = st.sidebar.slider("Connection depth (hops)", 1, 3, 2)
 filter_originals = st.sidebar.checkbox("Only Original Members", value=False)
 theme_choice = st.sidebar.selectbox("Background Theme", ["White", "Black"])
 
-st.sidebar.markdown("### Legend")
-st.sidebar.markdown("- 🟦 **Band**")
-st.sidebar.markdown("- 🟨 **Original Member**")
-st.sidebar.markdown("- 🟩 **Other Musician**")
-st.sidebar.markdown("- **Gray line**: Connection")
-st.sidebar.markdown("- **Gold line**: Original Member Connection")
-
-# Update query from typing
 if manual_query:
     st.session_state["query"] = manual_query.strip()
-
-# Capture clicked node from JS
-clicked_node = streamlit_js_eval(js_expressions="", key="clicked-node")
-
-if clicked_node and clicked_node != st.session_state["query"]:
-    st.session_state["query"] = clicked_node.strip()
-    st.experimental_rerun()   # rerun immediately when a new node is clicked
 
 query = st.session_state["query"]
 
@@ -78,8 +55,6 @@ if query:
             if dist <= radius
         ]
 
-        st.write(f"Connections within {radius} hops of {actual_name}:")
-
         if filter_originals:
             filtered_nodes = [
                 n for n in nodes_within_radius
@@ -90,76 +65,31 @@ if query:
 
         subgraph = G.subgraph(filtered_nodes)
 
-        if theme_choice == "White":
-            bg_color, font_color = "white", "black"
-            band_color, original_color, musician_color = "#1f77b4", "#ff7f0e", "#2ca02c"
-            edge_normal, edge_original = "#888888", "#ff7f0e"
-        else:
-            bg_color, font_color = "black", "white"
-            band_color, original_color, musician_color = "#6baed6", "#ffd700", "#98fb98"
-            edge_normal, edge_original = "#aaaaaa", "#ffd700"
-
-        net = Network(height="700px", width="100%", bgcolor=bg_color, font_color=font_color)
-        net.force_atlas_2based()
-
+        # Build node/edge lists for component
+        nodes = []
+        edges = []
         for node, data in subgraph.nodes(data=True):
             if data.get("type") == "Band":
-                color = band_color
+                color = "#1f77b4" if theme_choice == "White" else "#6baed6"
             elif data.get("original_member") == "YES":
-                color = original_color
+                color = "#ff7f0e" if theme_choice == "White" else "#ffd700"
             else:
-                color = musician_color
-            title = f"Type: {data.get('type','Unknown')} | Original: {data.get('original_member','NO')}"
-            net.add_node(node, label=node, color=color, title=title)
+                color = "#2ca02c" if theme_choice == "White" else "#98fb98"
+            nodes.append({"id": node, "label": node, "color": color})
 
         for u, v, data in subgraph.edges(data=True):
-            color = edge_original if data.get("original_member") else edge_normal
+            color = "#ff7f0e" if (theme_choice == "White" and data.get("original_member")) else \
+                    "#ffd700" if (theme_choice == "Black" and data.get("original_member")) else \
+                    "#888888" if theme_choice == "White" else "#aaaaaa"
             width = 3 if data.get("original_member") else 1.5
-            net.add_edge(u, v, color=color, width=width)
+            edges.append({"from": u, "to": v, "color": color, "width": width})
 
-        html = net.generate_html(notebook=False)
+        # Call the component
+        clicked_node = visjs_network(nodes, edges, key="network")
 
-        # Patch: expose network as window.network
-        html = html.replace("var network = new vis.Network", "window.network = new vis.Network")
-
-        # Inject JS to capture clicks and notify Streamlit
-        click_js = """
-        <script type="text/javascript">
-          window.addEventListener("load", function() {
-            if (window.network) {
-              window.network.on("click", function(params) {
-                if (params.nodes && params.nodes.length > 0) {
-                  const nodeId = params.nodes[0];
-                  window.clickedNode = nodeId;
-                  console.log("Clicked node:", nodeId);
-                  if (window.Streamlit) {
-                    Streamlit.setComponentValue(nodeId);  // notify Streamlit immediately
-                  }
-                }
-              });
-            }
-          });
-        </script>
-        """
-
-        css_reset = f"""
-        <style>
-          html, body {{
-            background: {bg_color} !important;
-            color: {font_color} !important;
-          }}
-          #mynetwork {{
-            background: {bg_color} !important;
-          }}
-          #mynetwork canvas {{
-            background: {bg_color} !important;
-          }}
-        </style>
-        """
-
-        wrapped_html = f"{css_reset}{html}{click_js}"
-        components.html(wrapped_html, height=750, scrolling=True)
-
+        if clicked_node and clicked_node != st.session_state["query"]:
+            st.session_state["query"] = clicked_node
+            st.experimental_rerun()
     else:
         st.warning("Name not found in dataset.")
 else:
