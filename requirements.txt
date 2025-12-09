@@ -8,6 +8,8 @@ setuptools
 wheel
 pyvis
 streamlit-js-eval
+streamlit-autorefresh
+
 
 
 
