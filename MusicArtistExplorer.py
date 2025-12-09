@@ -36,10 +36,10 @@ for _, row in connections.iterrows():
         if G.nodes[to_node].get("type") == "Musician":
             G.nodes[to_node]["original_member"] = "YES"
 
-# --- Streamlit UI ---
+# --- UI ---
 st.title("🎶 Musician ↔ Band Explorer")
 
-# Initialize session state
+# Use session_state for active node
 if "query" not in st.session_state:
     st.session_state["query"] = ""
 
@@ -56,14 +56,21 @@ st.sidebar.markdown("- 🟩 **Other Musician**")
 st.sidebar.markdown("- **Gray line**: Connection")
 st.sidebar.markdown("- **Gold line**: Original Member Connection")
 
-# Update session_state if user typed something
+# Update query from typing
 if manual_query:
     st.session_state["query"] = manual_query.strip()
 
-# Capture clicked node from JS
-clicked_node = streamlit_js_eval(js_expressions="window.clickedNode", key="clicked")
-if clicked_node:
-    st.session_state["query"] = clicked_node.strip()
+# Poll the browser for clicked node and rerun if changed
+st_autorefresh_count = st.experimental_get_query_params().get("refresh", [0])[0]
+st_autorefresh_count = int(st_autorefresh_count) if str(st_autorefresh_count).isdigit() else 0
+st_autorefresh = st.sidebar.checkbox("Auto-refresh clicks", value=True)
+if st_autorefresh:
+    st.experimental_set_query_params(refresh=st_autorefresh_count + 1)
+    st.experimental_rerun  # note: Streamlit automatically reruns each script cycle
+
+clicked_node = streamlit_js_eval(js_expressions="window.clickedNode", key="clicked-node")
+if clicked_node and clicked_node != st.session_state["query"]:
+    st.session_state["query"] = clicked_node
 
 query = st.session_state["query"]
 
@@ -100,6 +107,7 @@ if query:
         net = Network(height="700px", width="100%", bgcolor=bg_color, font_color=font_color)
         net.force_atlas_2based()
 
+        # Add nodes (including useful hover titles)
         for node, data in subgraph.nodes(data=True):
             if data.get("type") == "Band":
                 color = band_color
@@ -107,23 +115,28 @@ if query:
                 color = original_color
             else:
                 color = musician_color
-            net.add_node(node, label=node, color=color)
+            title = f"Type: {data.get('type','Unknown')} | Original: {data.get('original_member','NO')}"
+            net.add_node(node, label=node, color=color, title=title)
 
+        # Add edges
         for u, v, data in subgraph.edges(data=True):
             color = edge_original if data.get("original_member") else edge_normal
             width = 3 if data.get("original_member") else 1.5
             net.add_edge(u, v, color=color, width=width)
 
+        # Generate HTML and patch network exposure
         html = net.generate_html(notebook=False)
+        # Make the vis.js network accessible as window.network
+        html = html.replace("var network = new vis.Network", "window.network = new vis.Network")
 
-        # Inject JS to capture clicks
+        # Inject JS to capture node clicks
         click_js = """
         <script type="text/javascript">
           window.addEventListener("load", function() {
             if (window.network) {
               window.network.on("click", function(params) {
-                if (params.nodes.length > 0) {
-                  let nodeId = params.nodes[0];
+                if (params.nodes && params.nodes.length > 0) {
+                  const nodeId = params.nodes[0];
                   window.clickedNode = nodeId;
                   console.log("Clicked node:", nodeId);
                 }
@@ -153,3 +166,5 @@ if query:
 
     else:
         st.warning("Name not found in dataset.")
+else:
+    st.info("Type a name in the sidebar or click a node to start drilling down.")
