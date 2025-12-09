@@ -39,8 +39,12 @@ for _, row in connections.iterrows():
 # --- Streamlit UI ---
 st.title("🎶 Musician ↔ Band Explorer")
 
+# Initialize session state
+if "query" not in st.session_state:
+    st.session_state["query"] = ""
+
 st.sidebar.header("Search Options")
-query = st.sidebar.text_input("Enter a musician or band name:")
+manual_query = st.sidebar.text_input("Enter a musician or band name:", value=st.session_state["query"])
 radius = st.sidebar.slider("Connection depth (hops)", 1, 3, 2)
 filter_originals = st.sidebar.checkbox("Only Original Members", value=False)
 theme_choice = st.sidebar.selectbox("Background Theme", ["White", "Black"])
@@ -52,16 +56,19 @@ st.sidebar.markdown("- 🟩 **Other Musician**")
 st.sidebar.markdown("- **Gray line**: Connection")
 st.sidebar.markdown("- **Gold line**: Original Member Connection")
 
-# --- Capture clicked node from JS ---
-clicked_node = streamlit_js_eval(js_expressions="window.clickedNode", key="clicked")
+# Update session_state if user typed something
+if manual_query:
+    st.session_state["query"] = manual_query.strip()
 
+# Capture clicked node from JS
+clicked_node = streamlit_js_eval(js_expressions="window.clickedNode", key="clicked")
 if clicked_node:
-    query = clicked_node  # override query with clicked node
+    st.session_state["query"] = clicked_node.strip()
+
+query = st.session_state["query"]
 
 if query:
-    query = query.strip()
     lookup = {str(name).lower(): str(name) for name in G.nodes}
-
     if query.lower() in lookup:
         actual_name = lookup[query.lower()]
         nodes_within_radius = [
