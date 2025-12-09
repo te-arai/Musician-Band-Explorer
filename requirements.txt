@@ -7,5 +7,7 @@ networkx
 setuptools
 wheel
 pyvis
+streamlit-js-eval
+
 
 
