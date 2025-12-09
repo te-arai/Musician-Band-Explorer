@@ -1,7 +1,12 @@
 streamlit
 pandas
 networkx
-openpyxl      # for reading Excel files
-
-
+matplotlib
+openpyxl
+networkx
+setuptools
+wheel
+pyvis
+streamlit-js-eval
+streamlit-autorefresh
 
