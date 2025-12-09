@@ -70,4 +70,94 @@ if clicked_node and clicked_node != st.session_state["query"]:
 query = st.session_state["query"]
 
 if query:
-    lookup = {str(name).lower(): str(name) for
+    lookup = {str(name).lower(): str(name) for name in G.nodes}
+    if query.lower() in lookup:
+        actual_name = lookup[query.lower()]
+        nodes_within_radius = [
+            n for n, dist in nx.single_source_shortest_path_length(G, actual_name).items()
+            if dist <= radius
+        ]
+
+        st.write(f"Connections within {radius} hops of {actual_name}:")
+
+        if filter_originals:
+            filtered_nodes = [
+                n for n in nodes_within_radius
+                if G.nodes[n].get("original_member") == "YES" or G.nodes[n].get("type") == "Band"
+            ]
+        else:
+            filtered_nodes = nodes_within_radius
+
+        subgraph = G.subgraph(filtered_nodes)
+
+        if theme_choice == "White":
+            bg_color, font_color = "white", "black"
+            band_color, original_color, musician_color = "#1f77b4", "#ff7f0e", "#2ca02c"
+            edge_normal, edge_original = "#888888", "#ff7f0e"
+        else:
+            bg_color, font_color = "black", "white"
+            band_color, original_color, musician_color = "#6baed6", "#ffd700", "#98fb98"
+            edge_normal, edge_original = "#aaaaaa", "#ffd700"
+
+        net = Network(height="700px", width="100%", bgcolor=bg_color, font_color=font_color)
+        net.force_atlas_2based()
+
+        for node, data in subgraph.nodes(data=True):
+            if data.get("type") == "Band":
+                color = band_color
+            elif data.get("original_member") == "YES":
+                color = original_color
+            else:
+                color = musician_color
+            title = f"Type: {data.get('type','Unknown')} | Original: {data.get('original_member','NO')}"
+            net.add_node(node, label=node, color=color, title=title)
+
+        for u, v, data in subgraph.edges(data=True):
+            color = edge_original if data.get("original_member") else edge_normal
+            width = 3 if data.get("original_member") else 1.5
+            net.add_edge(u, v, color=color, width=width)
+
+        html = net.generate_html(notebook=False)
+
+        # Patch: expose network as window.network
+        html = html.replace("var network = new vis.Network", "window.network = new vis.Network")
+
+        # Inject JS to capture clicks
+        click_js = """
+        <script type="text/javascript">
+          window.addEventListener("load", function() {
+            if (window.network) {
+              window.network.on("click", function(params) {
+                if (params.nodes && params.nodes.length > 0) {
+                  const nodeId = params.nodes[0];
+                  window.clickedNode = nodeId;
+                  console.log("Clicked node:", nodeId);
+                }
+              });
+            }
+          });
+        </script>
+        """
+
+        css_reset = f"""
+        <style>
+          html, body {{
+            background: {bg_color} !important;
+            color: {font_color} !important;
+          }}
+          #mynetwork {{
+            background: {bg_color} !important;
+          }}
+          #mynetwork canvas {{
+            background: {bg_color} !important;
+          }}
+        </style>
+        """
+
+        wrapped_html = f"{css_reset}{html}{click_js}"
+        components.html(wrapped_html, height=750, scrolling=True)
+
+    else:
+        st.warning("Name not found in dataset.")
+else:
+    st.info("Type a name in the sidebar or click a node to start drilling down.")
