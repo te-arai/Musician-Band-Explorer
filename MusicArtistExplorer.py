@@ -4,6 +4,7 @@ import networkx as nx
 from pyvis.network import Network
 import streamlit.components.v1 as components
 from streamlit_js_eval import streamlit_js_eval
+from streamlit_autorefresh import st_autorefresh
 
 # --- Load your dataset ---
 elements = pd.read_excel("ArtistsBands.xlsx", sheet_name="Elements")
@@ -60,12 +61,14 @@ st.sidebar.markdown("- **Gold line**: Original Member Connection")
 if manual_query:
     st.session_state["query"] = manual_query.strip()
 
+# --- Auto-refresh every second to poll for clicks ---
+st_autorefresh(interval=1000, key="refresh")
+
 # Capture clicked node from JS
 clicked_node = streamlit_js_eval(js_expressions="window.clickedNode", key="clicked-node")
 
 if clicked_node and clicked_node != st.session_state["query"]:
     st.session_state["query"] = clicked_node.strip()
-    st.experimental_rerun()   # <-- force rerun when a new node is clicked
 
 query = st.session_state["query"]
 
